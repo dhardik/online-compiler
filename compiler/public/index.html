@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TextEditor</title>
+        <script src="codemirror/lib/codemirror.js"></script>
+        <link rel="stylesheet" href="codemirror/lib/codemirror.css">
+        <script src="codemirror/mode/clike/clike.js"></script>
+        <link rel="stylesheet" href="codemirror/theme/3024-night.css">
+        <script src="codemirror/addon/scroll/simplescrollbars.js"></script>
+        <script src="codemirror/addon/display/fullscreen.js"></script>
+        <link rel="stylesheet" href="codemirror/addon/display/fullscreen.css">
+        <link rel="stylesheet" href="codemirror/addon/scroll/simplescrollbars.css">
+        <script src="codemirror/addon/edit/closebrackets.js"></script>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <h2 style="text-align:center;">CODE COMPILER</h2>
+        <div class="container">
+            <textarea id="editor">#include <stdio.h>
+
+int main()
+{
+    printf("Hello World !!");
+    return 0;
+}
+            </textarea><i>Press " f11 " for full screen</i><br><br>
+            <input type="checkbox" value="customInput" id="customCb"> Custom Input<br>
+            <textarea id="customInputArea" rows="5" class="form-control" placeholder="Custom input goes here ..." disabled></textarea><br>
+            <button id = "run-btn" class="btn btn-primary">Run</button>
+            <h4>Output</h4>
+            <textarea id="outputArea" rows="10" style="background-color:black ; color: white;" class="form-control" placeholder="Output" readonly></textarea>
+        </div>
+    </body>
+    <script>
+        var editor = CodeMirror.fromTextArea(document.getElementById("editor"),{
+            lineNumbers : true,
+            mode : "clike",
+            theme: "3024-night",
+            smartIndent: true,
+            indentWithTabs: true,
+            scrollbarStyle: "overlay",
+            cursorScrollMargin: 3,
+            mode: "text/x-csrc" ,
+            autoCloseBrackets : true,
+        });
+        var cb = document.getElementById("customCb");
+        var customInputArea = document.getElementById("customInputArea");
+        var outputArea = document.getElementById("outputArea");
+        cb.addEventListener("click",function(event) {
+            if(cb.checked == false) {
+                customInputArea.value = "";
+                customInputArea.disabled = true;
+            }
+            else {
+                customInputArea.value = "";
+                customInputArea.disabled = false;
+            }
+        });
+
+        document.getElementById("run-btn").addEventListener("click",function() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/run");
+
+            var obj = new Object();
+            obj = {
+                code : editor.getValue() ,
+                input : customInputArea.value
+            }
+            xhr.onreadystatechange = function() {
+                if(xhr.status == 400) {
+                    alert("E : 400 Bad Request ");
+                    location.reload();
+                }
+                if(xhr.readyState != 4) {
+                    outputArea.innerHTML = "Processing ...";   
+                }
+                else if(xhr.readyState == 4 && xhr.status == 200) {
+                    outputArea.innerHTML = xhr.responseText;
+                }
+            };
+            xhr.setRequestHeader("Content-Type","application/json");
+            xhr.send(JSON.stringify(obj));
+        });
+    </script>
+</html>
